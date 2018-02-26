@@ -1,0 +1,62 @@
+FROM jenkins/jenkins:2.108
+
+RUN /usr/local/bin/install-plugins.sh \
+ace-editor:1.1 \
+branch-api:2.0.8 \
+cloudbees-folder:6.0.2   \
+credentials:2.1.13 \
+durable-task:1.18 \
+git:3.3.2 \
+git-client:2.4.5 \
+git-server:1.7 \
+handlebars:1.1.1 \
+icon-shim:2.0.3 \
+jquery-detached:1.2.1 \
+junit:1.24 \
+mailer:1.20 \
+display-url-api:2.0 \
+matrix-project:1.8 \
+mock-slave:1.10 \
+momentjs:1.1.1 \
+pipeline-build-step:2.5.1 \
+pipeline-input-step:2.8 \
+pipeline-stage-step:2.2 \
+pipeline-stage-view:2.8 \
+pipeline-milestone-step:1.3.1 \
+pipeline-model-definition:1.1.9 \
+scm-api:2.2.6 \
+script-security:1.41 \
+ssh-credentials:1.13 \
+structs:1.14 \
+workflow-aggregator:2.5 \
+workflow-api:2.25 \
+workflow-basic-steps:2.6 \
+workflow-cps:2.45 \
+workflow-cps-global-lib:2.8 \
+workflow-durable-task-step:2.19 \
+workflow-job:2.14.1 \
+workflow-multibranch:2.16 \
+workflow-scm-step:2.6 \
+workflow-step-api:2.14 \
+workflow-support:2.18 \
+oauth-credentials:0.3 \
+google-oauth-plugin:0.4 \
+ssh-slaves:1.16 \
+token-macro:2.0 \
+google-login:1.3 \
+matrix-auth:1.5 \
+slack:2.0.1 \
+kubernetes:1.3.1 \
+credentials-binding:1.15 \
+plain-credentials:1.4 \
+ssh-agent:1.14 \
+bouncycastle-api:2.16.0 \
+build-token-root:1.4 \
+conditional-buildstep:1.3.5 \
+http_request:1.8.13 \
+timestamper:1.8.8 \
+lockable-resources:2.0 \
+job-dsl:1.64 \
+gradle:1.27
+
+COPY resources/init.groovy.d/ /usr/share/jenkins/ref/init.groovy.d/

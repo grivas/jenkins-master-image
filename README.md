@@ -1,2 +1,4 @@
-# jenkins-master-image
-Jenkins master that uses kubernetes workloads to execute build pipelines.
+# Jenkins image
+
+docker build -t jenkins-image ./docker
+docker run -d -v $(pwd)/configuration:/etc/jenkins/ jenkins-image
