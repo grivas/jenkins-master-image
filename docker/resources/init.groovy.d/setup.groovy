@@ -1,11 +1,11 @@
+@groovy.lang.Grab('org.yaml:snakeyaml:1.19')
+
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider
-import groovy.json.JsonOutput
 import groovy.xml.MarkupBuilder
 import hudson.security.AuthorizationStrategy
 import hudson.security.HudsonPrivateSecurityRealm
 import hudson.slaves.EnvironmentVariablesNodeProperty
-import hudson.util.Secret
 import javaposse.jobdsl.plugin.GlobalJobDslSecurityConfiguration
 import jenkins.model.Jenkins
 import jenkins.plugins.slack.SlackNotifier
@@ -18,21 +18,22 @@ import org.csanchez.jenkins.plugins.kubernetes.volumes.HostPathVolume
 import org.csanchez.jenkins.plugins.kubernetes.volumes.SecretVolume
 import org.jenkinsci.plugins.googlelogin.GoogleOAuth2SecurityRealm
 import org.kohsuke.stapler.StaplerRequest
+import org.yaml.snakeyaml.Yaml
 
 import static com.cloudbees.plugins.credentials.CredentialsScope.GLOBAL
 
-loadJenkinsConfigFrom('/etc/jenkins/jenkins-configuration.groovy').with {
-    if (isSet('seed')) createSeedJob(seed)
-    if (isSet('envVars')) createEnvironmentVariables(envVars)
-    if (isSet('ssh')) createSshCredentias(ssh)
-    if (isSet('views')) setupViews(views)
-    if (isSet('kubernetes')) setupKubernetesPlugin(kubernetes)
-    if (isSet('slack')) setupSlackIntegration(slack)
-    if (isSet('auth')) setupAuthenticationAuthorization(auth)
+loadJenkinsConfigFrom('/etc/jenkins/jenkins-configuration.yaml').with {
+    if (containsKey('seed')) createSeedJob(get('seed'))
+    if (containsKey('envVars')) createEnvironmentVariables(get('envVars'))
+    if (containsKey('ssh')) createSshCredentias(get('ssh'))
+    if (containsKey('views')) setupViews(get('views'))
+    if (containsKey('kubernetes')) setupKubernetesPlugin(get('kubernetes'))
+    if (containsKey('slack')) setupSlackIntegration(get('slack'))
+    if (containsKey('auth')) setupAuthenticationAuthorization(get('auth'))
 }
 
 static loadJenkinsConfigFrom(String path) {
-    new ConfigSlurper().parse(new File(path).text).jenkins
+    new Yaml().load(new File(path).text).jenkins
 }
 
 static createSshCredentias(Map<String, String> ssh) {
@@ -106,13 +107,15 @@ static setupAuthenticationAuthorization(Map<String, String> auth) {
         println "Skipping authentication and authorization setup"
         Jenkins.instance.setAuthorizationStrategy(new AuthorizationStrategy.Unsecured())
         Jenkins.instance.setSecurityRealm(new HudsonPrivateSecurityRealm(true))
-    } else {
-        Jenkins.instance.setSecurityRealm(new GoogleOAuth2SecurityRealm(auth.clientId, auth.clientSecret, auth.domain))
-        //Authorizes all authenticated users as administrators.
-        def strategy = new hudson.security.GlobalMatrixAuthorizationStrategy()
-        strategy.add(Jenkins.ADMINISTER, 'authenticated')
-        Jenkins.instance.setAuthorizationStrategy(strategy)
-        println "Authentication and authorization successfully setup"
+    } else if (auth.google){
+        auth.google.with {
+            Jenkins.instance.setSecurityRealm(new GoogleOAuth2SecurityRealm(clientId, clientSecret, domain))
+            //Authorizes all authenticated users as administrators.
+            def strategy = new hudson.security.GlobalMatrixAuthorizationStrategy()
+            strategy.add(Jenkins.ADMINISTER, 'authenticated')
+            Jenkins.instance.setAuthorizationStrategy(strategy)
+            println "Google auth successfully setup"
+        }
     }
     Jenkins.instance.setSlaveAgentPort(50000)
     Jenkins.instance.save()
@@ -157,7 +160,7 @@ static createSeedJob(seed) {
                         "hudson.plugins.git.UserRemoteConfig" {
                             name { mkp.yield("origin") }
                             url { mkp.yield(seed.repository) }
-                            if (!seed.credentials.isEmpty()){
+                            if (seed.credentials){
                                 credentialsId { mkp.yield(seed.credentials) }
                             }
                         }
