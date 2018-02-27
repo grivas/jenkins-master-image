@@ -5,7 +5,15 @@ jenkins:
 
   seed:
     repository: https://github.com/grivas/jenkins-pipeline-jobs.git
+    #credentials: key1
 
+#  #SSH keys
+#  ssh:
+#    key1:
+#        #Private key in base 64
+#        content: xxxxx
+#        passphrase: yyyyy
+#
 #  #Google login configuration
 #  auth:
 #      google:

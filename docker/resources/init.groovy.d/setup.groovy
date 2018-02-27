@@ -40,11 +40,12 @@ static createSshCredentias(Map<String, String> ssh) {
     ssh.each {
         id, key ->
             def globalCredentials = Jenkins.instance.getExtensionList(SystemCredentialsProvider)[0].getCredentials()
+            def keyContents = new String(key.content.decodeBase64())
             def sshCredentials = new BasicSSHUserPrivateKey(
                     GLOBAL,
                     id,
                     id,
-                    new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(key.content),
+                    new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(keyContents),
                     key.passphrase,
                     ""
             )
