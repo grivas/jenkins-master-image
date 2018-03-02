@@ -27,20 +27,50 @@ jenkins:
 #      jenkinsUrl:
 #      token:
 #
-#  #kubernetes configuration
-#  kubernetes:
-#      #kubernetesConfiguration name
-#      name: kubernetes
-#      # Kubernetes api url. Using local as slaves are expected to run in the same machine
-#      serverUrl: https://kubernetes.default.svc.cluster.local
-#      # Namespace that build slaves will belong to
-#      namespace: build-server
-#      #Jenkins master URL. Since master runs in the same cluster and also belongs to
-#      #build-server namespace, slaves can access it by using only it's service name.
-#      jenkinsUrl: http://jenkins-master
-#      # The maximum number of concurrently running slave containers that Kubernetes is allowed to run
-#      containerCap: 5
-#      connectTimeout: 5
-#      readTimeout: 15
-#      retentionTimeout: 0
-#      defaultTemplate: "slave"
+  #kubernetes configuration
+  kubernetes:
+    #kubernetesConfiguration name
+    name: kubernetes
+    # Kubernetes api url. Using local as slaves are expected to run in the same machine
+    serverUrl: https://kubernetes.default.svc.cluster.local
+    # Namespace that build slaves will belong to
+    namespace: build-server
+    #Jenkins master URL. Since master runs in the same cluster and also belongs to
+    #build-server namespace, slaves can access it by using only it's service name.
+    jenkinsUrl: http://jenkins-master
+    # The maximum number of concurrently running slave containers that Kubernetes is allowed to run
+    containerCap: 5
+    connectTimeout: 5
+    readTimeout: 15
+    retentionTimeout: 0
+    defaultTemplate: slave
+    templates:
+      slave:
+        # Docker image ID for a jenkins JNLP slave.
+        # This image is responsible to run a jenkins jnlp bootstrap agent and connect to Jenkins master.
+        # Secret key and slave name as well as jenkins callback URL are passed as argument as
+        # expected by hudson.remoting.jnlp.Main.
+        containers:
+        - name: jnlp
+          image: jenkinsci/jnlp-slave:3.16-1
+          command: ""
+          args: '${computer.jnlpmac} ${computer.name}'
+          tty: false
+        - name: docker
+          image: docker:1.11
+          command: ""
+          args: ""
+          tty: true
+
+        # Mounts "configuration" secret to /etc/jenkins. The secret should exist in build-server namespace
+        # and contain google_application_credentials.json entry
+        volumes:
+          hostPath:
+            - mountPath: /var/run/docker.sock
+              hostPath: /var/run/docker.sock
+          secret:
+            - mountPath: /etc/jenkins
+              secretName: configuration
+        envVars:
+        - GOOGLE_APPLICATION_CREDENTIALS: /etc/jenkins/google_application_credentials.json
+        instanceCap: 5

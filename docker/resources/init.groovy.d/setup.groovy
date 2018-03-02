@@ -74,7 +74,6 @@ static setupSlackIntegration(Map<String, String> slack) {
 }
 
 static setupKubernetesPlugin(Map<String, Object> kubernetes) {
-    Jenkins.instance.setNumExecutors(0)
     def templates = kubernetes.templates.collect {
         name, pod ->
             def volumes = pod.volumes.hostPath.collect { new HostPathVolume(it.mountPath, it.hostPath) }
@@ -95,8 +94,15 @@ static setupKubernetesPlugin(Map<String, Object> kubernetes) {
             template
     }
 
-    def kubernetesCloud = new KubernetesCloud(kubernetes.name, templates, kubernetes.serverUrl, kubernetes.namespace, kubernetes.jenkinsUrl,
-            kubernetes.containerCap, kubernetes.connectTimeout, kubernetes.readTimeout, kubernetes.retentionTimeout)
+    def kubernetesCloud = new KubernetesCloud(kubernetes.name)
+    kubernetesCloud.templates = templates
+    kubernetesCloud.serverUrl = kubernetes.serverUrl
+    kubernetesCloud.namespace = kubernetes.namespace
+    kubernetesCloud.jenkinsUrl = kubernetes.jenkinsUrl
+    kubernetesCloud.connectTimeout = kubernetes.connectTimeout
+    kubernetesCloud.readTimeout = kubernetes.readTimeout
+    kubernetesCloud.retentionTimeout = kubernetes.retentionTimeout
+
     kubernetesCloud.setDefaultsProviderTemplate(kubernetes.defaultTemplate)
     println "Kubernetes cloud successfully added"
     Jenkins.instance.clouds.add(kubernetesCloud)
